@@ -4,39 +4,60 @@
 
 using namespace std;
 
-int main() {
-    string outputFileText = "../data/malicious_sample.txt";
-    string outputFileCsv = "../data/malicious_dataset.csv";
+int main(int argc, char* argv[]) {
+    // Default parameters
+    string textFile = "../data/malicious_sample.txt";
+    string csvFile = "../data/malicious_dataset.csv";
+    size_t repeatCount = 100000;
 
-    // 1. Generate the Malicious Text
-    // We create a block of 10,000 'A's ending in "Fe"
-    string block = string(10000, 'A') + "Fe";
+    // CLI parser: --text <path> --csv <path> --repeats <n>
+    for (int i = 1; i < argc; ++i) {
+        string arg = argv[i];
+        if (arg == "--text" && i + 1 < argc) textFile = argv[++i];
+        else if (arg == "--csv" && i + 1 < argc) csvFile = argv[++i];
+        else if (arg == "--repeats" && i + 1 < argc) repeatCount = stoull(argv[++i]);
+    }
+
+    // 1. Generate the text file data
+    // Creates the "GFFeaGFFea..." pattern and appends "FeGF" at the end
+    string collisionPattern = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGFFe";
+    string suffix = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFeGF";
     
-    string text = "";
-    cout << "Generating massive malicious text (this may take a second)..." << endl;
+    // Pre-allocate memory for performance
+    string fullText;
+    fullText.reserve((collisionPattern.length() * repeatCount) + suffix.length());
     
-    // Repeat the block 1,000 times (creates a ~10MB file)
-    for (int i = 0; i < 1000; i++) { 
-        text += block;
+    for (size_t i = 0; i < repeatCount; ++i) {
+        fullText += collisionPattern;
     }
     
-    // Append the actual target at the very end so it must scan the whole file
-    string target_pattern = string(10000, 'A') + "GF";
-    text += target_pattern; 
+    size_t indexOfMatchingString = fullText.length();
+    fullText += suffix;
 
-    ofstream outText(outputFileText);
-    outText << text;
-    outText.close();
-
-    // 2. Generate the CSV Query
-    ofstream outCsv(outputFileCsv);
-    outCsv << "word,expected_index\n";
+    // Write to text file
+    ofstream txtOut(textFile);
+    if (!txtOut.is_open()) {
+        cerr << "Error: Could not open " << textFile << " for writing.\n";
+        return 1;
+    }
+    txtOut << fullText;
+    txtOut.close();
     
-    // The expected index is exactly where we appended the target pattern
-    size_t expected_index = 1000 * block.length();
-    outCsv << target_pattern << "," << expected_index << "\n";
-    outCsv.close();
+    cout << "Created " << textFile << " with length " << fullText.length() << " characters.\n";
 
-    cout << "Malicious dataset created in ../data/!" << endl;
+    // 2. Generate the CSV file
+    // Sets up the headers and places FeGF first, followed by its expected index
+    ofstream csvOut(csvFile);
+    if (!csvOut.is_open()) {
+        cerr << "Error: Could not open " << csvFile << " for writing.\n";
+        return 1;
+    }
+    
+    csvOut << "word,expected_index\n";
+    csvOut << "FeGF," << indexOfMatchingString << "\n";
+    csvOut.close();
+    
+    cout << "Created " << csvFile << " successfully.\n";
+
     return 0;
 }
