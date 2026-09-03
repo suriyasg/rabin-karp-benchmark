@@ -4,7 +4,7 @@
 
 using namespace std;
 
-int rabinKarpDeterministic(const string& text, const string& pattern) {
+int rabinKarpDeterministic(const string& text, const string& pattern, int* collisions) {
     int N = text.length();
     int M = pattern.length();
     if (M > N) return -1;
@@ -24,6 +24,8 @@ int rabinKarpDeterministic(const string& text, const string& pattern) {
         h_text = (h_text * B + text[i]) % q;
     }
 
+    int local_collisions = 0;
+    
     for (int i = 0; i <= N - M; i++) {
         if (h_pattern == h_text) {
             bool match = true;
@@ -33,7 +35,12 @@ int rabinKarpDeterministic(const string& text, const string& pattern) {
                     break;
                 }
             }
-            if (match) return i; 
+            if (match) {
+                if (collisions) *collisions += local_collisions;
+                return i; 
+            } else {
+                local_collisions++; // Spurious match / false positive
+            }
         }
         if (i < N - M) {
             long long removed = (text[i] * B_M_minus_1) % q;
@@ -41,10 +48,11 @@ int rabinKarpDeterministic(const string& text, const string& pattern) {
             h_text = (h_text * B + text[i + M]) % q;
         }
     }
+    if (collisions) *collisions += local_collisions;
     return -1;
 }
 
-int rabinKarpRandomizedBase(const string& text, const string& pattern) {
+int rabinKarpRandomizedBase(const string& text, const string& pattern, int* collisions) {
     int N = text.length();
     int M = pattern.length();
     if (M > N) return -1;
@@ -66,6 +74,7 @@ int rabinKarpRandomizedBase(const string& text, const string& pattern) {
         h_text = (h_text * B + text[i]) % q;
     }
 
+    int local_collisions = 0;
     for (int i = 0; i <= N - M; i++) {
         if (h_pattern == h_text) {
             bool match = true;
@@ -75,7 +84,12 @@ int rabinKarpRandomizedBase(const string& text, const string& pattern) {
                     break;
                 }
             }
-            if (match) return i; 
+            if (match) {
+                if (collisions) *collisions += local_collisions;
+                return i; 
+            } else {
+                local_collisions++; // Spurious match / false positive
+            }
         }
         if (i < N - M) {
             long long removed = (text[i] * B_M_minus_1) % q;
@@ -86,7 +100,7 @@ int rabinKarpRandomizedBase(const string& text, const string& pattern) {
     return -1;
 }
 
-int rabinKarpRandomizedModulo(const string& text, const string& pattern) {
+int rabinKarpRandomizedModulo(const string& text, const string& pattern, int* collisions) {
     int N = text.length();
     int M = pattern.length();
     if (M > N) return -1;
@@ -123,6 +137,7 @@ int rabinKarpRandomizedModulo(const string& text, const string& pattern) {
         h_text = (h_text * B + text[i]) % q;
     }
 
+    int local_collisions = 0;
     // Slide the window
     for (int i = 0; i <= N - M; i++) {
         
@@ -135,7 +150,12 @@ int rabinKarpRandomizedModulo(const string& text, const string& pattern) {
                     break;
                 }
             }
-            if (match) return i; 
+            if (match) {
+                if (collisions) *collisions += local_collisions;
+                return i; 
+            } else {
+                local_collisions++; // Spurious match / false positive
+            }
         }
 
         // Roll the hash forward

@@ -55,18 +55,27 @@ void LoadData(const string& textPath, const string& csvPath) {
 // ---------------------------------------------------------
 
 static void BM_Deterministic(benchmark::State& state) {
-    // Calculate safe bounds OUTSIDE the timed loop to avoid benchmarking the math
     int total_cases = global_testCases.size();
     int start_idx = min(max(0, global_offset), total_cases);
     int elements = (global_count < 0) ? (total_cases - start_idx) : global_count;
     int end_idx = min(start_idx + elements, total_cases);
 
+    int total_collisions = 0;
+
     for (auto _ : state) {
+        int iter_collisions = 0;
         for (int i = start_idx; i < end_idx; ++i) {
-            int res = rabinKarpDeterministic(global_text, global_testCases[i].word);
+            int res = rabinKarpDeterministic(global_text, global_testCases[i].word, &iter_collisions);
             benchmark::DoNotOptimize(res); 
         }
+        total_collisions += iter_collisions;
     }
+
+    // Report average collisions per benchmark iteration
+    state.counters["Collisions"] = benchmark::Counter(
+        total_collisions, 
+        benchmark::Counter::kAvgIterations
+    );
 }
 BENCHMARK(BM_Deterministic)->Unit(benchmark::kMillisecond);
 
@@ -76,12 +85,21 @@ static void BM_RandomizedBase(benchmark::State& state) {
     int elements = (global_count < 0) ? (total_cases - start_idx) : global_count;
     int end_idx = min(start_idx + elements, total_cases);
 
+    int total_collisions = 0;
+
     for (auto _ : state) {
+        int iter_collisions = 0;
         for (int i = start_idx; i < end_idx; ++i) {
-            int res = rabinKarpRandomizedBase(global_text, global_testCases[i].word);
+            int res = rabinKarpRandomizedBase(global_text, global_testCases[i].word, &iter_collisions);
             benchmark::DoNotOptimize(res);
         }
+        total_collisions += iter_collisions;
     }
+
+    state.counters["Collisions"] = benchmark::Counter(
+        total_collisions, 
+        benchmark::Counter::kAvgIterations
+    );
 }
 BENCHMARK(BM_RandomizedBase)->Unit(benchmark::kMillisecond);
 
@@ -91,12 +109,21 @@ static void BM_RandomizedModulo(benchmark::State& state) {
     int elements = (global_count < 0) ? (total_cases - start_idx) : global_count;
     int end_idx = min(start_idx + elements, total_cases);
 
+    int total_collisions = 0;
+
     for (auto _ : state) {
+        int iter_collisions = 0;
         for (int i = start_idx; i < end_idx; ++i) {
-            int res = rabinKarpRandomizedModulo(global_text, global_testCases[i].word);
+            int res = rabinKarpRandomizedModulo(global_text, global_testCases[i].word, &iter_collisions);
             benchmark::DoNotOptimize(res);
         }
+        total_collisions += iter_collisions;
     }
+
+    state.counters["Collisions"] = benchmark::Counter(
+        total_collisions, 
+        benchmark::Counter::kAvgIterations
+    );
 }
 BENCHMARK(BM_RandomizedModulo)->Unit(benchmark::kMillisecond);
 
