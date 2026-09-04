@@ -127,6 +127,29 @@ static void BM_RandomizedModulo(benchmark::State& state) {
 }
 BENCHMARK(BM_RandomizedModulo)->Unit(benchmark::kMillisecond);
 
+static void BM_MonteCarlo(benchmark::State& state) {
+    int total_cases = global_testCases.size();
+    int start_idx = min(max(0, global_offset), total_cases);
+    int elements = (global_count < 0) ? (total_cases - start_idx) : global_count;
+    int end_idx = min(start_idx + elements, total_cases);
+
+    int total_collisions = 0;
+    for (auto _ : state) {
+        int iter_collisions = 0;
+        for (int i = start_idx; i < end_idx; ++i) {
+            int res = rabinKarpMonteCarlo(global_text, global_testCases[i].word, &iter_collisions);
+            benchmark::DoNotOptimize(res);
+        }
+        total_collisions += iter_collisions;
+    }
+
+    state.counters["Collisions"] = benchmark::Counter(
+        total_collisions, 
+        benchmark::Counter::kAvgIterations
+    );
+}
+BENCHMARK(BM_MonteCarlo)->Unit(benchmark::kMillisecond);
+
 // ---------------------------------------------------------
 // CUSTOM MAIN FUNCTION
 // ---------------------------------------------------------
