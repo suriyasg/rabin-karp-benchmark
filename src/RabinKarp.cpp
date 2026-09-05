@@ -1,6 +1,7 @@
 #include "RabinKarp.hpp"
 #include <vector>
 #include <random>
+#include <chrono>
 
 using namespace std;
 
@@ -225,5 +226,61 @@ int rabinKarpMonteCarlo(const string& text, const string& pattern, int* collisio
             h2_text = (h2_text * B2 + text[i + M]) % q2;
         }
     }
+    return -1;
+}
+
+
+
+// Experiment function for detecting time taken to detect hash collision
+int rabinKarpDeterministic_Timed(const string& text, const string& pattern, double* time_spent_verifying) {
+    int N = text.length();
+    int M = pattern.length();
+    if (M > N) return -1;
+
+    long long q = 1000000007; 
+    long long B = 31; 
+
+    long long B_M_minus_1 = 1;
+    for (int i = 0; i < M - 1; i++) B_M_minus_1 = (B_M_minus_1 * B) % q;
+
+    long long h_pattern = 0;
+    long long h_text = 0;
+    for (int i = 0; i < M; i++) {
+        h_pattern = (h_pattern * B + pattern[i]) % q;
+        h_text = (h_text * B + text[i]) % q;
+    }
+
+    double local_verification_time = 0.0;
+    
+    for (int i = 0; i <= N - M; i++) {
+        if (h_pattern == h_text) {
+            // START TIMING: Hash collision detected
+            auto start = std::chrono::high_resolution_clock::now();
+            
+            bool match = true;
+            for (int j = 0; j < M; j++) {
+                if (text[i + j] != pattern[j]) {
+                    match = false;
+                    break;
+                }
+            }
+            
+            // STOP TIMING: Verification completed or failed
+            auto end = std::chrono::high_resolution_clock::now();
+            local_verification_time += std::chrono::duration<double>(end - start).count();
+
+            if (match) {
+                if (time_spent_verifying) *time_spent_verifying += local_verification_time;
+                return i; 
+            }
+        }
+        if (i < N - M) {
+            long long removed = (text[i] * B_M_minus_1) % q;
+            h_text = (h_text - removed + q) % q; 
+            h_text = (h_text * B + text[i + M]) % q;
+        }
+    }
+    
+    if (time_spent_verifying) *time_spent_verifying += local_verification_time;
     return -1;
 }

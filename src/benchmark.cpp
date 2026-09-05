@@ -150,6 +150,37 @@ static void BM_MonteCarlo(benchmark::State& state) {
 }
 BENCHMARK(BM_MonteCarlo)->Unit(benchmark::kMillisecond);
 
+
+static void BM_CollisionDetectionTime(benchmark::State& state) {
+    int total_cases = global_testCases.size();
+    int start_idx = min(max(0, global_offset), total_cases);
+    int elements = (global_count < 0) ? (total_cases - start_idx) : global_count;
+    int end_idx = min(start_idx + elements, total_cases);
+
+    // Track total collision time across ALL iterations
+    double total_collision_time_seconds = 0.0;
+
+    for (auto _ : state) {
+        double iter_collision_time = 0.0;
+        for (int i = start_idx; i < end_idx; ++i) {
+            int res = rabinKarpDeterministic_Timed(global_text, global_testCases[i].word, &iter_collision_time);
+            benchmark::DoNotOptimize(res);
+        }
+        total_collision_time_seconds += iter_collision_time;
+    }
+
+    // Tell Google Benchmark to create a new column in the output
+    // kAvgIterations will automatically divide the total time by the number of loop iterations
+    state.counters["CollisionTime_ms"] = benchmark::Counter(
+        total_collision_time_seconds * 1000.0, // Convert to milliseconds for easier reading
+        benchmark::Counter::kAvgIterations
+    );
+}
+
+// REMOVED UseManualTime() - Let Google Benchmark time the whole function normally
+BENCHMARK(BM_CollisionDetectionTime)->Unit(benchmark::kMillisecond);
+
+
 // ---------------------------------------------------------
 // CUSTOM MAIN FUNCTION
 // ---------------------------------------------------------
