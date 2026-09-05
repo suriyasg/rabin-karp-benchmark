@@ -8,7 +8,7 @@ int main(int argc, char* argv[]) {
     // Default parameters
     string textFile = "../data/malicious_sample.txt";
     string csvFile = "../data/malicious_dataset.csv";
-    size_t repeatCount = 100000;
+    size_t repeatCount = 1;
 
     // CLI parser: --text <path> --csv <path> --repeats <n>
     for (int i = 1; i < argc; ++i) {
@@ -20,8 +20,20 @@ int main(int argc, char* argv[]) {
 
     // 1. Generate the text file data
     // Creates the "GFFeaGFFea..." pattern and appends "FeGF" at the end
-    string collisionPattern = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGFFe";
-    string suffix = "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFeGF";
+    string matchingSubPatternMaker = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    
+    string matchingSubPattern;
+    matchingSubPattern.reserve((matchingSubPatternMaker.length() * repeatCount));
+    
+    for (size_t i = 0; i < 100000; ++i) {
+        matchingSubPattern += matchingSubPatternMaker;
+    }
+
+    string collidingPattern1 = "GFFe";
+    string collidingPattern2 = "FeGF";
+    
+    string collisionPattern = matchingSubPattern + "GFFe";
+    string suffix = matchingSubPattern + "FeGF";
     
     // Pre-allocate memory for performance
     string fullText;
@@ -54,7 +66,7 @@ int main(int argc, char* argv[]) {
     }
     
     csvOut << "word,expected_index\n";
-    csvOut << "FeGF," << indexOfMatchingString << "\n";
+    csvOut << suffix << "," << indexOfMatchingString << "\n";
     csvOut.close();
     
     cout << "Created " << csvFile << " successfully.\n";
