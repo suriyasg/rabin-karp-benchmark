@@ -270,7 +270,7 @@ int rabinKarpDeterministic_Timed(const string& text, const string& pattern, doub
             local_verification_time += std::chrono::duration<double>(end - start).count();
 
             if (match) {
-                if (time_spent_verifying) *time_spent_verifying += local_verification_time;
+                if (time_spent_verifying) *time_spent_verifying += local_verification_time - std::chrono::duration<double>(end - start).count();
                 return i; 
             }
         }
