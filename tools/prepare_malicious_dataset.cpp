@@ -9,6 +9,11 @@ int main(int argc, char* argv[]) {
     string textFile = "../data/malicious_sample.txt";
     string csvFile = "../data/malicious_dataset.csv";
     size_t repeatCount = 1;
+    size_t matchingSubPatternRepeatCount = 1000000;
+    string matchingSubPatternMaker = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    string collidingPattern1 = "GFFe";
+    string collidingPattern2 = "FeGF";
+
 
     // CLI parser: --text <path> --csv <path> --repeats <n>
     for (int i = 1; i < argc; ++i) {
@@ -16,24 +21,24 @@ int main(int argc, char* argv[]) {
         if (arg == "--text" && i + 1 < argc) textFile = argv[++i];
         else if (arg == "--csv" && i + 1 < argc) csvFile = argv[++i];
         else if (arg == "--repeats" && i + 1 < argc) repeatCount = stoull(argv[++i]);
+        else if (arg == "--msprepeats" && i + 1 < argc) matchingSubPatternRepeatCount = stoull(argv[++i]);
+        else if (arg == "--matchingSubPatternMaker" && i + 1 < argc) matchingSubPatternMaker = argv[++i];
+        else if (arg == "--collidingPattern1" && i + 1 < argc) collidingPattern1 = argv[++i];
+        else if (arg == "--collidingPattern2" && i + 1 < argc) collidingPattern2 = argv[++i];
     }
 
     // 1. Generate the text file data
     // Creates the "GFFeaGFFea..." pattern and appends "FeGF" at the end
-    string matchingSubPatternMaker = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
     
     string matchingSubPattern;
     matchingSubPattern.reserve((matchingSubPatternMaker.length() * repeatCount));
     
-    for (size_t i = 0; i < 100000; ++i) {
+    for (size_t i = 0; i < matchingSubPatternRepeatCount; ++i) {
         matchingSubPattern += matchingSubPatternMaker;
     }
-
-    string collidingPattern1 = "GFFe";
-    string collidingPattern2 = "FeGF";
     
-    string collisionPattern = matchingSubPattern + "GFFe";
-    string suffix = matchingSubPattern + "FeGF";
+    string collisionPattern = matchingSubPattern + collidingPattern1;
+    string suffix = matchingSubPattern + collidingPattern2;
     
     // Pre-allocate memory for performance
     string fullText;
